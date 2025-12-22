@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Slow Sip Café | Booking Fix</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/material_orange.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <style>
+        /* --- 🎨 PALETTE --- */
+        :root {
+            --col-deep-coffee: #2B1D14;
+            --col-muted-orange: #D97A43;
+            --col-steel-gray: #5F5F5F;
+            --col-sand-beige: #E6D3B1;
+            --col-white: #FFFFFF;
+            --col-red-closed: #d32f2f;
+            --col-green-open: #388e3c;
+
+            --bg-body: var(--col-sand-beige);
+            --bg-card: var(--col-white);
+            --text-main: var(--col-deep-coffee);
+            --accent-primary: var(--col-muted-orange);
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+            --shadow: 0 10px 25px rgba(43, 29, 20, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+        }
+
+        /* --- CUSTOM TOAST NOTIFICATION --- */
+        .toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 6000;
+            display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px;
+        }
+        .toast {
+            background-color: var(--col-deep-coffee); color: var(--col-sand-beige);
+            padding: 15px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            font-family: var(--font-sans); font-size: 0.9rem; display: flex; align-items: center; gap: 12px;
+            opacity: 0; transform: translateY(-20px); transition: 0.3s ease; border-left: 4px solid var(--col-muted-orange);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-color: var(--col-green-open); }
+        .toast.error { border-color: var(--col-red-closed); }
+
+        /* --- FLATPICKR STYLING --- */
+        .flatpickr-calendar { background: var(--col-white); border: 1px solid var(--col-deep-coffee); font-family: var(--font-sans); box-shadow: var(--shadow); }
+        .flatpickr-day.selected { background: var(--col-muted-orange) !important; border-color: var(--col-muted-orange) !important; }
+        .flatpickr-time { border-top: 1px solid #eee; }
+        .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: #f3f3f3; }
+
+        /* --- HEADER & NAV --- */
+        .top-offer-bar { position: relative; width: 100%; height: 40px; background-color: #1a110d; color: var(--col-sand-beige); display: flex; align-items: center; overflow: hidden; border-bottom: 1px solid var(--col-muted-orange); }
+        .offer-track { display: flex; white-space: nowrap; animation: slideHorizontal 30s linear infinite; }
+        .offer-item { padding: 0 50px; font-size: 0.9rem; font-weight: 500; letter-spacing: 1px; }
+        .offer-item span { color: var(--col-muted-orange); font-weight: 700; }
+        @keyframes slideHorizontal { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        header { padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; background: rgba(230, 211, 177, 0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(43, 29, 20, 0.1); }
+        .logo { font-size: 1.8rem; font-weight: 700; font-family: var(--font-serif); color: var(--col-deep-coffee); }
+        .status { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot.open { background: var(--col-green-open); box-shadow: 0 0 8px var(--col-green-open); animation: pulse 2s infinite; }
+        .dot.closed { background: var(--col-red-closed); box-shadow: none; }
+        
+        nav ul { display: flex; list-style: none; gap: 20px; align-items: center; }
+        nav a { text-decoration: none; color: var(--col-deep-coffee); font-weight: 500; transition: 0.3s; cursor: pointer; font-size: 0.95rem; }
+        nav a:hover { color: var(--col-muted-orange); }
+
+        .login-btn-nav {
+            border: 2px solid var(--col-deep-coffee);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .login-btn-nav:hover { background: var(--col-deep-coffee); color: var(--col-sand-beige); }
+
+        /* --- HERO --- */
+        .hero { height: 80vh; background: linear-gradient(rgba(43, 29, 20, 0.6), rgba(43, 29, 20, 0.5)), url('https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); background-size: cover; background-position: center; background-attachment: fixed; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--col-sand-beige); padding: 20px; }
+        .hero h1 { font-size: 4.5rem; margin-bottom: 10px; font-family: var(--font-serif); text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .hero p { font-size: 1.3rem; font-style: italic; margin-bottom: 30px; opacity: 0.9; color: var(--col-white); }
+        .hero-buttons { display: flex; gap: 15px; }
+        .btn { padding: 12px 35px; border-radius: 50px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; letter-spacing: 0.5px; }
+        .btn-primary { background: var(--col-muted-orange); color: var(--col-white); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-outline { border: 2px solid var(--col-sand-beige); background: transparent; color: var(--col-sand-beige); }
+        .btn-outline:hover { background: var(--col-sand-beige); color: var(--col-deep-coffee); }
+
+        /* --- VIBE --- */
+        .vibe-section { padding: 60px 5%; text-align: center; }
+        .vibe-container { width: 100%; height: 500px; margin-top: 30px; border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); border: 8px solid var(--col-white); position: relative; }
+        .vibe-container iframe { width: 100%; height: 100%; border: none; }
+
+        /* --- MENU --- */
+        .menu-section { padding: 80px 5%; position: relative; }
+        .section-header { text-align: center; margin-bottom: 50px; }
+        .section-header h2 { font-size: 3rem; color: var(--col-deep-coffee); font-family: var(--font-serif); }
+        .menu-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 20px; border: 2px solid var(--col-deep-coffee); background: transparent; border-radius: 30px; cursor: pointer; font-family: var(--font-sans); color: var(--col-deep-coffee); font-weight: 600; transition: 0.3s; font-size: 0.9rem; }
+        .tab-btn.active, .tab-btn:hover { background: var(--col-deep-coffee); color: var(--col-sand-beige); }
+        .kitchen-layout { display: flex; gap: 40px; max-width: 1300px; margin: 0 auto; align-items: flex-start; }
+        .menu-grid { flex: 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; overflow: visible; padding: 10px; }
+
+        .animate-card { opacity: 0; transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform, opacity; }
+        .slide-left { transform: translateX(-50px); }
+        .slide-right { transform: translateX(50px); }
+        .slide-up { transform: translateY(50px); }
+        .zoom-in { transform: scale(0.8); }
+        .animate-card.active { opacity: 1; transform: translate(0) scale(1); }
+
+        .menu-card { background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(43, 29, 20, 0.2); border-color: var(--col-muted-orange); }
+        .card-img { height: 180px; width: 100%; object-fit: cover; }
+        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .card-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--col-deep-coffee); }
+        .price { color: var(--col-muted-orange); font-weight: 700; font-family: var(--font-serif); font-size: 1.1rem; }
+        .desc { font-size: 0.85rem; color: var(--col-steel-gray); margin-bottom: 15px; flex-grow: 1; line-height: 1.4; }
+        .add-btn { background: transparent; border: 2px solid var(--col-muted-orange); color: var(--col-muted-orange); padding: 8px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.2s; }
+        .add-btn:hover { background: var(--col-muted-orange); color: var(--col-white); }
+
+        .local-sidebar { flex: 1; background-color: #1a110d; border: 2px solid var(--col-muted-orange); border-radius: 15px; padding-bottom: 20px; overflow: hidden; position: sticky; top: 100px; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .sidebar-title { background: var(--col-muted-orange); color: white; text-align: center; font-size: 0.8rem; padding: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; position: relative; }
+        .vertical-track-container { height: 100%; overflow: hidden; position: relative; }
+        .vertical-track { display: flex; flex-direction: column; animation: scrollVertical 40s linear infinite; }
+        .local-sidebar:hover .vertical-track { animation-play-state: paused; }
+        .v-item { padding: 15px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--col-sand-beige); font-size: 0.9rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .v-item:hover { background: rgba(217, 122, 67, 0.2); color: white; }
+        @keyframes scrollVertical { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+
+        /* --- BOOKING --- */
+        .booking-section { padding: 80px 5%; background: rgba(95, 95, 95, 0.05); display: flex; justify-content: center; }
+        .booking-container { background: var(--col-white); padding: 45px; border-radius: 20px; box-shadow: var(--shadow); width: 100%; max-width: 600px; border: 1px solid rgba(43, 29, 20, 0.05); }
+        .form-control { width: 100%; padding: 14px; border: 1px solid #ddd; background: #FAFAFA; border-radius: 8px; margin-bottom: 15px; font-family: var(--font-sans); color: var(--col-deep-coffee); }
+        .form-select { width: 100%; padding: 14px; border: 1px solid #ddd; background: #FAFAFA; border-radius: 8px; margin-bottom: 15px; font-family: var(--font-sans); color: var(--col-deep-coffee); cursor: pointer; }
+        .booking-fee-notice { background: rgba(217, 122, 67, 0.1); border: 1px solid var(--col-muted-orange); padding: 15px; border-radius: 8px; margin-bottom: 20px; color: var(--col-deep-coffee); font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+
+        /* --- MODALS --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(43, 29, 20, 0.85); display: flex; justify-content: center; align-items: center; z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box { background: var(--col-white); width: 90%; max-width: 450px; padding: 30px; border-radius: 15px; position: relative; border-top: 6px solid var(--col-muted-orange); max-height: 85vh; overflow-y: auto; text-align: center; }
+        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; color: var(--col-steel-gray); transition: 0.2s; }
+        .close-modal:hover { color: var(--col-red-closed); transform: rotate(90deg); }
+
+        .loyalty-track { margin: 20px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .stamp { width: 40px; height: 40px; border-radius: 50%; border: 2px dashed var(--col-muted-orange); display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 1.2rem; }
+        .stamp.filled { background: var(--col-muted-orange); color: white; border-style: solid; box-shadow: 0 0 10px rgba(217, 122, 67, 0.5); }
+        
+        .contact-link { display: flex; align-items: center; gap: 15px; padding: 15px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; text-decoration: none; color: var(--col-deep-coffee); transition: 0.2s; cursor: pointer; }
+        .contact-link:hover { background: #f9f9f9; transform: translateX(5px); border-color: var(--col-muted-orange); }
+        .contact-link i { font-size: 1.5rem; color: var(--col-muted-orange); }
+
+        .cart-btn { position: fixed; bottom: 30px; right: 30px; background: var(--col-deep-coffee); color: var(--col-sand-beige); padding: 15px 25px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 999; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; transition: 0.3s; border: 2px solid var(--col-sand-beige); }
+        .cart-btn:hover { transform: scale(1.05); background: var(--col-muted-orange); border-color: var(--col-deep-coffee); color: var(--col-deep-coffee); }
+        .cart-count { background: var(--col-muted-orange); color: var(--col-white); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; }
+        .cart-item-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; text-align: left; }
+        .cart-controls { display: flex; align-items: center; gap: 10px; }
+        .qty-btn { background: var(--col-sand-beige); border: none; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; font-weight: bold; color: var(--col-deep-coffee); }
+        .remove-icon { color: red; cursor: pointer; margin-left: 10px; }
+
+        .checkout-summary { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: var(--col-deep-coffee); border: 1px solid #eee; text-align: left;}
+        .radio-group { margin-bottom: 15px; text-align: left; }
+        .radio-group label { display: block; margin-bottom: 8px; cursor: pointer; font-weight: 500; }
+
+        .disclaimer-box { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; text-align: left; }
+        .disclaimer-box strong { color: #d32f2f; display: block; margin-bottom: 5px; font-size: 1rem; }
+
+        .history-item { background: #f8f8f8; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
+        .history-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; color: var(--col-deep-coffee); }
+        .reorder-btn { margin-top: 10px; background: var(--col-deep-coffee); color: white; padding: 5px 15px; border-radius: 4px; font-size: 0.8rem; border: none; cursor: pointer; }
+
+        footer { background: var(--col-deep-coffee); color: var(--col-sand-beige); padding: 60px 5% 20px; text-align: center; }
+        .dev-credit { margin-top: 40px; border-top: 1px solid rgba(230, 211, 177, 0.2); padding-top: 20px; font-size: 0.9rem; color: var(--col-steel-gray); }
+        .dev-credit a { color: var(--col-muted-orange); text-decoration: none; }
+        .footer-links { display: flex; justify-content: center; gap: 25px; margin-bottom: 20px; }
+        .footer-links a { color: var(--col-sand-beige); font-size: 1.5rem; transition: 0.3s; cursor: pointer; }
+        .footer-links a:hover { color: var(--col-muted-orange); transform: translateY(-3px); }
+
+        @media(max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            nav { display: none; }
+            .kitchen-layout { flex-direction: column; }
+            .local-sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="top-offer-bar">
+        <div class="offer-track">
+            <div class="offer-item">🎉 Festival Special: Use <span>FEST25</span> for 25% OFF!</div>
+            <div class="offer-item">🛵 Free Delivery on First Order: <span>FIRSTSIP</span></div>
+            <div class="offer-item">🍛 Try our new South Indian Platter!</div>
+            <div class="offer-item">🍹 Fresh Mango Lassi is Back!</div>
+            <div class="offer-item">🎉 Festival Special: Use <span>FEST25</span> for 25% OFF!</div>
+            <div class="offer-item">🛵 Free Delivery on First Order: <span>FIRSTSIP</span></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-group">
+            <div class="logo">The Slow Sip.</div>
+            <div class="status" id="cafeStatus">
+                <span class="dot" id="statusDot"></span> 
+                <span id="statusText">Checking...</span>
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#vibe">360 View</a></li>
+                <li><a href="#menu">Our Kitchen</a></li>
+                <li><a onclick="openHistory()">Order History</a></li>
+                <li><a class="login-btn-nav" id="loginNavBtn" onclick="openLoginModal()">Login / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="cart-btn" onclick="openCart()">
+        <i class="fas fa-shopping-bag"></i>
+        <span>My Order</span>
+        <span class="cart-count" id="cartCount">0</span>
+    </div>
+
+    <section class="hero">
+        <h1>Brewed for moments <br> you don’t rush.</h1>
+        <p>Global Flavors • Indian Soul • Specialty Coffee</p>
+        <div class="hero-buttons">
+            <a href="#menu"><button class="btn btn-primary">See the Menu 🍴</button></a>
+            <a href="#book"><button class="btn btn-outline">Book a Table</button></a>
+        </div>
+    </section>
+
+    <section id="vibe" class="vibe-section">
+        <div class="section-header">
+            <span style="color: var(--col-muted-orange); letter-spacing: 2px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">Virtual Tour</span>
+            <h2>Step Inside The Slow Sip</h2>
+        </div>
+        <div class="vibe-container">
+            <iframe src="https://my.matterport.com/show/?m=WRCAG23oKLM&play=1&qs=1&lang=en-US&mls=2&brand=0&help=1" frameborder="0" allowfullscreen allow="xr-spatial-tracking"></iframe>
+        </div>
+    </section>
+
+    <section id="menu" class="menu-section">
+        <div class="section-header">
+            <h2>Our Kitchen & Brews</h2>
+            <p>From Traditional Chai to Italian Pasta</p>
+        </div>
+
+        <div class="menu-tabs">
+            <button class="tab-btn active" onclick="renderMenu('all')">All</button>
+            <button class="tab-btn" onclick="renderMenu('brews')">Brews & Lassi</button>
+            <button class="tab-btn" onclick="renderMenu('snacks')">Burgers & Wraps</button>
+            <button class="tab-btn" onclick="renderMenu('south')">South Indian</button>
+            <button class="tab-btn" onclick="renderMenu('chaat')">Street Food</button>
+            <button class="tab-btn" onclick="renderMenu('chinese')">Chinese</button>
+            <button class="tab-btn" onclick="renderMenu('italian')">Italian</button>
+            <button class="tab-btn" onclick="renderMenu('dessert')">Desserts</button>
+        </div>
+
+        <div class="kitchen-layout">
+            <div class="menu-grid" id="menuContainer"></div>
+            <div class="local-sidebar">
+                <div class="sidebar-title">Trending Now</div>
+                <div class="vertical-track-container">
+                    <div class="vertical-track" id="trendingTrack"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="book" class="booking-section">
+        <div class="booking-container">
+            <h2 style="font-family: var(--font-serif); margin-bottom: 20px; color: var(--col-deep-coffee); text-align: center;">Reserve a Table</h2>
+            <p style="text-align: center; color: var(--col-steel-gray); margin-bottom: 20px;">Open Daily: 8:00 AM – 11:00 PM</p>
+            
+            <form onsubmit="event.preventDefault(); initiateBooking();">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="bookingPhone" class="form-control" placeholder="Phone Number (10 digits)" pattern="[0-9]{10}" required>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="bookingDate" class="form-control flatpickr-input" placeholder="Select Date" readonly="readonly" required>
+                    <input type="text" id="bookingTime" class="form-control flatpickr-input" placeholder="Select Time" readonly="readonly" required>
+                </div>
+
+                <select class="form-select" required>
+                    <option value="" disabled selected>Select Your Table</option>
+                    <option value="1">Table 1 - Window View (2 Pax)</option>
+                    <option value="2">Table 2 - Cozy Corner (2 Pax)</option>
+                    <option value="3">Table 3 - Family Booth (4 Pax)</option>
+                    <option value="4">Table 4 - Center Aisle (4 Pax)</option>
+                    <option value="5">Table 5 - Large Group (6+ Pax)</option>
+                    <option value="6">Table 6 - Outdoor Patio (2 Pax)</option>
+                </select>
+
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="tableCouponCode" class="form-control" placeholder="Coupon Code (e.g. FEST25)" style="margin-bottom:0;">
+                    <button type="button" class="btn" style="background:#5F5F5F; color:white; padding:0 15px;" onclick="applyTableCoupon()">Apply</button>
+                </div>
+
+                <div class="booking-fee-notice">
+                    <span><i class="fas fa-lock"></i> Table Reservation Deposit</span>
+                    <strong id="bookingDepositAmount">₹500.00</strong>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" id="bookingBtn">Pay ₹500 & Confirm</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <h3>The Slow Sip.</h3>
+            <p style="color: var(--col-sand-beige);">12th Main, Indiranagar, Bangalore</p>
+            
+            <div class="footer-links">
+                <a onclick="openContactModal('Phone', '+91 98765 43210')" title="Call Us"><i class="fas fa-phone-alt"></i></a>
+                <a onclick="openContactModal('Instagram', '@theslowsip')" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a onclick="openContactModal('Facebook', 'The Slow Sip Cafe')" title="Facebook"><i class="fab fa-facebook"></i></a>
+            </div>
+        </div>
+        <div class="dev-credit">
+            Built and developed by <a href="https://github.com/gauravngit-ux" target="_blank">Gaurav Sharma</a>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 15px;">Login / Sign Up</h2>
+            <p style="margin-bottom: 20px; font-size:0.9rem; color:#666;">Unlock exclusive rewards & track orders.</p>
+            <form onsubmit="event.preventDefault(); sendOTP();">
+                <input type="text" id="loginName" class="form-control" placeholder="Your Name" required>
+                <input type="email" id="loginEmail" class="form-control" placeholder="Email Address" required>
+                <input type="tel" id="loginPhone" class="form-control" placeholder="Phone (10 digits)" pattern="[0-9]{10}" required>
+                <button class="btn btn-primary" style="width:100%;">Get OTP</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="otpModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeOtpModal()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee);">Verify OTP</h2>
+            <p style="margin-bottom: 20px; font-size:0.9rem; color:#666;">Enter the 4-digit code sent to your phone.</p>
+            <input type="text" id="otpInput" class="form-control" placeholder="XXXX" maxlength="4" style="text-align:center; font-size:1.5rem; letter-spacing:5px;">
+            <button class="btn btn-primary" style="width:100%;" onclick="verifyOTP()">Verify & Login</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="loyaltyModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeLoyaltyModal()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee);">Your Rewards</h2>
+            <div style="background:#fdf6ec; padding:15px; border-radius:10px; margin-top:15px;">
+                <h3 style="color:var(--col-muted-orange); font-size:2rem; margin-bottom:5px;" id="stampCount">0/7</h3>
+                <p style="font-size:0.9rem; font-weight:bold;">Sip Stamps Collected</p>
+                <div class="loyalty-track" id="loyaltyTrack"></div>
+                <p style="font-size:0.8rem; color:#666;">Collect 7 stamps to get 25% OFF your 8th order!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="document.getElementById('contactModal').classList.remove('active')">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 15px;" id="contactTitle">Connect</h2>
+            <div class="disclaimer-box">
+                <strong>⚠️ DEMO LINK</strong>
+                This is a showcase project. No real social media accounts exist for "The Slow Sip".<br>
+                To see a live business project, check out <strong>QuickShine</strong> in my portfolio.
+            </div>
+            <div style="background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #ddd;">
+                <p style="font-size:1.2rem; font-weight:bold; color:var(--col-deep-coffee);" id="contactValue">@theslowsip</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeCart()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 20px;">Your Order</h2>
+            <div id="cartList" style="margin-bottom: 20px; text-align: left;"><p style="text-align: center; color: #888;">Your cart is empty.</p></div>
+            <div style="border-top: 1px solid #ddd; padding-top: 15px; display: flex; justify-content: space-between; font-weight: bold; color: var(--col-deep-coffee);"><span>Total:</span><span id="cartTotal">₹0</span></div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="openCheckout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeHistory()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 20px;">Order History</h2>
+            <div id="historyList" style="margin-bottom: 20px; text-align: left; max-height: 400px; overflow-y: scroll;"><p style="text-align: center; color: #888;">No past orders found.</p></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeCheckout()">&times;</span>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 10px;">Checkout</h2>
+            <div class="checkout-summary">
+                <div style="display:flex; justify-content:space-between;"><span>Subtotal:</span> <span id="checkoutSubtotal">₹0</span></div>
+                <div style="display:flex; justify-content:space-between; color:green; display:none;" id="discountRow"><span>Discount:</span> <span id="checkoutDiscount">-₹0</span></div>
+                <div style="display:flex; justify-content:space-between; color:var(--col-muted-orange); display:none;" id="loyaltyRow"><span>🎉 Loyalty Reward:</span> <span id="loyaltyDiscount">-25%</span></div>
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem;"><span>Total to Pay:</span> <span id="checkoutTotalAmount">₹0</span></div>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="couponCode" class="form-control" placeholder="Coupon Code (e.g. FEST25)" style="margin-bottom:0;">
+                <button type="button" class="btn" style="background:#5F5F5F; color:white; padding:0 15px;" onclick="applyCoupon()">Apply</button>
+            </div>
+            <form onsubmit="event.preventDefault(); validateAndPayOrder();">
+                <input type="text" class="form-control" placeholder="Full Name" id="checkoutName" required>
+                <input type="text" class="form-control" placeholder="Delivery Address" required>
+                <input type="tel" id="checkoutPhone" class="form-control" placeholder="Phone Number (10 digits)" pattern="[0-9]{10}" required>
+                <div class="radio-group">
+                    <label style="color: var(--col-muted-orange); font-weight: bold; margin-bottom: 10px; display:block;">Payment Method</label>
+                    <label><input type="radio" name="payment" value="cod" checked onchange="togglePayment('cod')"> Cash on Delivery</label>
+                    <label><input type="radio" name="payment" value="upi" onchange="togglePayment('upi')"> UPI / Online Payment</label>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;">Place Order</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-box">
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee); margin-bottom: 15px;">Scan to Pay</h2>
+            <div class="disclaimer-box">
+                <strong>⚠️ IMPORTANT NOTICE</strong>
+                This is a portfolio showcase website. No actual business exists.<br>
+                Any payment made via this QR code is a donation to the developer.<br>
+                <strong>Items will not be delivered.</strong>
+            </div>
+            <p style="margin-bottom: 15px; font-weight: bold;" id="qrMessage">Scan to Pay</p>
+            <div id="qrImageContainer" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
+            <p style="font-size: 0.8rem; margin-top: 10px; color: #666;">UPI: gaurav-289@ptyes</p>
+            <br>
+            <button class="btn btn-primary" onclick="simulateScan()">I Have Paid</button>
+            <br><br>
+            <small style="color: #888; cursor: pointer;" onclick="closeQR()">Cancel</small>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-box">
+            <i class="fas fa-check-circle success-checkmark"></i>
+            <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee);">Order Confirmed!</h2>
+            <p style="color: var(--col-steel-gray); margin: 15px 0;" id="successMsg">Thank you for ordering from The Slow Sip.</p>
+            <p style="font-weight: bold; color: var(--col-deep-coffee);">Order ID: #<span id="orderId"></span></p>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="closeSuccess()">Continue Browsing</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-box" style="text-align: center;">
+            <span class="close-modal" onclick="closeItemModal()">&times;</span>
+            <h2 id="mTitle" style="color: var(--col-deep-coffee); font-family: var(--font-serif);">Item Name</h2>
+            <p id="mDesc" style="color: var(--col-steel-gray); margin: 15px 0;">Description</p>
+            <h3 id="mPrice" style="color: var(--col-muted-orange);">Price</h3>
+            <button class="btn btn-primary" style="margin-top: 15px;" onclick="addToCartFromModal()">Add to Cart</button>
+        </div>
+    </div>
+
+    <script>
+        const yourUPI = "gaurav-289@ptyes"; 
+        let paymentMethod = 'cod';
+        let currentTransactionType = ''; 
+        let currentBookingAmount = 500; 
+        let cartTotal = 0;
+        let discount = 0;
+        
+        let currentUser = JSON.parse(localStorage.getItem('slowSipUser')) || null;
+        let loyaltyStamps = parseInt(localStorage.getItem('slowSipStamps')) || 0;
+
+        function showToast(message, type = 'normal') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            toast.innerHTML = `<i class="fas fa-${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
+        function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
+        
+        function sendOTP() {
+            const name = document.getElementById('loginName').value;
+            const phone = document.getElementById('loginPhone').value;
+            if(!name || !phone || phone.length !== 10) { showToast("Enter valid details", "error"); return; }
+            closeLoginModal();
+            document.getElementById('otpModal').classList.add('active');
+            showToast("OTP Sent: 1234", "info");
+        }
+
+        function closeOtpModal() { document.getElementById('otpModal').classList.remove('active'); }
+
+        function verifyOTP() {
+            const otp = document.getElementById('otpInput').value;
+            if(otp === "1234") {
+                const name = document.getElementById('loginName').value;
+                const phone = document.getElementById('loginPhone').value;
+                currentUser = { name, phone };
+                localStorage.setItem('slowSipUser', JSON.stringify(currentUser));
+                closeOtpModal();
+                updateUserUI();
+                showToast(`Welcome back, ${name}!`, "success");
+            } else {
+                showToast("Invalid OTP", "error");
+            }
+        }
+
+        function updateUserUI() {
+            const btn = document.getElementById('loginNavBtn');
+            if(currentUser) {
+                btn.innerHTML = `<i class="fas fa-gift"></i> Hi, ${currentUser.name.split(' ')[0]}`;
+                btn.onclick = openLoyaltyModal;
+                const checkoutName = document.getElementById('checkoutName');
+                if(checkoutName) checkoutName.value = currentUser.name;
+                const checkoutPhone = document.getElementById('checkoutPhone');
+                if(checkoutPhone) checkoutPhone.value = currentUser.phone;
+            }
+        }
+
+        function openLoyaltyModal() {
+            const track = document.getElementById('loyaltyTrack');
+            track.innerHTML = '';
+            for(let i=1; i<=7; i++) {
+                const filled = i <= loyaltyStamps ? 'filled' : '';
+                const icon = i <= loyaltyStamps ? 'check' : 'coffee';
+                track.innerHTML += `<div class="stamp ${filled}"><i class="fas fa-${icon}"></i></div>`;
+            }
+            const rewardClass = loyaltyStamps >= 7 ? 'color: var(--col-muted-orange); animation: pulse 1s infinite;' : 'color: #eee;';
+            track.innerHTML += `<div style="font-size:2rem; margin-left:10px; ${rewardClass}"><i class="fas fa-gift"></i></div>`;
+            document.getElementById('stampCount').innerText = `${loyaltyStamps}/7`;
+            document.getElementById('loyaltyModal').classList.add('active');
+        }
+        function closeLoyaltyModal() { document.getElementById('loyaltyModal').classList.remove('active'); }
+
+        function openContactModal(type, value) {
+            document.getElementById('contactTitle').innerText = type;
+            document.getElementById('contactValue').innerText = value;
+            document.getElementById('contactModal').classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // INIT FLATPICKR
+            flatpickr("#bookingDate", { minDate: "today", dateFormat: "Y-m-d", theme: "material_orange" });
+            
+            // TIME PICKER (New Implementation)
+            flatpickr("#bookingTime", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "h:i K", // 12h format
+                minTime: "08:00",
+                maxTime: "23:00",
+                theme: "material_orange"
+            });
+
+            updateUserUI(); 
+        });
+
+        function updateCafeStatus() {
+            const now = new Date();
+            const hour = now.getHours();
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (hour >= 8 && hour < 23) {
+                dot.className = 'dot open'; text.innerText = "Open Now • Closes 11 PM";
+            } else {
+                dot.className = 'dot closed'; text.innerText = "Closed • Opens at 8 AM";
+            }
+        }
+
+        function applyTableCoupon() {
+            const code = document.getElementById('tableCouponCode').value.toUpperCase().trim();
+            if (code === 'FEST25') {
+                currentBookingAmount = 375;
+                showToast("Coupon Applied: 25% OFF!", "success");
+            } else if (code === 'FIRSTSIP') {
+                currentBookingAmount = 400;
+                showToast("Coupon Applied: ₹100 OFF!", "success");
+            } else {
+                currentBookingAmount = 500;
+                showToast("Invalid Coupon Code", "error");
+            }
+            document.getElementById('bookingDepositAmount').innerText = "₹" + currentBookingAmount;
+            document.getElementById('bookingBtn').innerText = `Pay ₹${currentBookingAmount} & Confirm`;
+        }
+
+        function initiateBooking() {
+            const phone = document.getElementById('bookingPhone').value;
+            const dateVal = document.getElementById('bookingDate').value;
+            const timeVal = document.getElementById('bookingTime').value;
+            
+            if (!/^\d{10}$/.test(phone)) { showToast("Enter a valid 10-digit phone number.", "error"); return; }
+            if (!dateVal || !timeVal) { showToast("Please select a date and time.", "error"); return; }
+
+            // No manual parsing needed with Flatpickr's minTime/maxTime protection!
+            // But we can double check date/time logic if needed for past times.
+            // Simplified for UX:
+            
+            currentTransactionType = 'booking';
+            showQR(currentBookingAmount);
+        }
+
+        function togglePayment(method) { paymentMethod = method; }
+        function closeCheckout() { document.getElementById('checkoutModal').classList.remove('active'); }
+
+        function openCheckout() {
+            if(cart.length === 0) return;
+            cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            discount = 0;
+            const loyaltyRow = document.getElementById('loyaltyRow');
+            if(loyaltyStamps >= 7) {
+                const reward = Math.round(cartTotal * 0.25);
+                discount = reward;
+                loyaltyRow.style.display = 'flex';
+            } else {
+                loyaltyRow.style.display = 'none';
+            }
+            updateCheckoutUI();
+            closeCart();
+            document.getElementById('checkoutModal').classList.add('active');
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById('couponCode').value.toUpperCase().trim();
+            if(loyaltyStamps >= 7) { showToast("Loyalty Reward Active! Cannot stack coupons.", "info"); return; }
+            if (code === 'FEST25') {
+                discount = Math.round(cartTotal * 0.25);
+                showToast("Coupon Applied: 25% OFF!", "success");
+            } else if (code === 'FIRSTSIP') {
+                discount = 100;
+                showToast("Coupon Applied: ₹100 OFF!", "success");
+            } else {
+                discount = 0;
+                showToast("Invalid Coupon Code", "error");
+            }
+            if (discount > cartTotal) discount = cartTotal;
+            updateCheckoutUI();
+        }
+
+        function updateCheckoutUI() {
+            document.getElementById('checkoutSubtotal').innerText = "₹" + cartTotal;
+            document.getElementById('checkoutDiscount').innerText = "-₹" + discount;
+            document.getElementById('checkoutTotalAmount').innerText = "₹" + (cartTotal - discount);
+            const discountRow = document.getElementById('discountRow');
+            if (discount > 0 && loyaltyStamps < 7) discountRow.style.display = 'flex'; 
+            else discountRow.style.display = 'none';
+        }
+
+        function validateAndPayOrder() {
+            const phone = document.getElementById('checkoutPhone').value;
+            if (!/^\d{10}$/.test(phone)) { showToast("Enter a valid 10-digit phone number.", "error"); return; }
+            if (paymentMethod === 'upi') {
+                closeCheckout();
+                currentTransactionType = 'order';
+                const finalAmount = cartTotal - discount;
+                showQR(finalAmount);
+            } else {
+                finalizeOrder();
+            }
+        }
+
+        function showQR(amount) {
+            document.getElementById('qrMessage').innerText = `Scan to pay ₹${amount}`;
+            const container = document.getElementById('qrImageContainer');
+            const upiString = `upi://pay?pa=${yourUPI}&pn=Gaurav%20Sharma&am=${amount}&cu=INR`;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+            container.innerHTML = `<img src="${qrApiUrl}" alt="Pay ₹${amount}" style="border-radius:10px; border: 2px solid #eee;">`;
+            document.getElementById('qrModal').classList.add('active');
+        }
+
+        function closeQR() { document.getElementById('qrModal').classList.remove('active'); }
+
+        function simulateScan() {
+            closeQR();
+            if (currentTransactionType === 'booking') {
+                document.getElementById('successMsg').innerText = "Table Confirmed! Deposit Received.";
+                document.getElementById('orderId').innerText = "TB-" + Math.floor(Math.random() * 10000);
+                document.getElementById('successModal').classList.add('active');
+            } else {
+                finalizeOrder(); 
+            }
+        }
+
+        // --- MENU DATA ---
+        const menuItems = [
+            { id: 1, name: "Cinnamon Oat Latte", price: 280, cat: "brews", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600", desc: "Signature espresso with oat milk & spice." },
+            { id: 2, name: "Iced Caramel Macchiato", price: 310, cat: "brews", img: "https://images.unsplash.com/photo-1461023058943-48dbf1399f98?auto=format&fit=crop&w=600", desc: "Vanilla syrup, cold milk, espresso and caramel." },
+            { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600", desc: "Creamy blended cold coffee with hazelnut." },
+            { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600", desc: "Perfect foam art with rich espresso." },
+            { id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "https://images.unsplash.com/photo-1576092768241-dec231854f74?auto=format&fit=crop&w=600", desc: "Traditional spiced tea served in clay pot." },
+            { id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600", desc: "Thick yogurt shake with fresh alphonso mango." },
+            { id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "https://images.unsplash.com/photo-1590700831614-7268579d460e?auto=format&fit=crop&w=600", desc: "Creamy yogurt drink topped with malai." },
+            { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600", desc: "Refreshing lime and mint cooler." },
+            { id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "https://images.unsplash.com/photo-1553909489-cd47e3b4430f?auto=format&fit=crop&w=600", desc: "Blended coffee topped with vanilla scoop." },
+            { id: 20, name: "Makhani Sauce Pasta", price: 390, cat: "italian", img: "https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&w=600", desc: "Fusion Penne pasta in rich creamy makhani gravy." },
+            { id: 21, name: "Truffle Mushroom Pizza", price: 550, cat: "italian", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600", desc: "Wood-fired crust with wild mushrooms and truffle oil." },
+            { id: 22, name: "Paneer Tikka Pizza", price: 480, cat: "italian", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600", desc: "Spiced paneer cubes, onions, and mozzarella." },
+            { id: 23, name: "Classic Aglio Olio", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600", desc: "Spaghetti tossed in olive oil, garlic, and chilli flakes." },
+            { id: 24, name: "Pesto Pasta", price: 410, cat: "italian", img: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600", desc: "Fresh basil and pine nut sauce." },
+            { id: 25, name: "Alfredo Pasta", price: 420, cat: "italian", img: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600", desc: "Rich white cheesy sauce with broccoli." },
+            { id: 26, name: "Classic Margherita", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600", desc: "Tomato, mozzarella and fresh basil." },
+            { id: 27, name: "Spicy Peri-Peri Pizza", price: 440, cat: "italian", img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600", desc: "Spicy peppers, onions and paprika." },
+            { id: 28, name: "Cheese Garlic Bread", price: 180, cat: "italian", img: "https://images.unsplash.com/photo-1573140247632-f84660f67126?auto=format&fit=crop&w=600", desc: "Toasted baguette slices with garlic butter." },
+            { id: 30, name: "Schezwan Noodles", price: 290, cat: "chinese", img: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600", desc: "Spicy wok-tossed noodles with crunchy veg." },
+            { id: 31, name: "Chilli Paneer Dry", price: 320, cat: "chinese", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600", desc: "Cottage cheese tossed in soy and chilli sauce." },
+            { id: 32, name: "Manchow Soup", price: 180, cat: "chinese", img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600", desc: "Hot spicy soup topped with fried noodles." },
+            { id: 33, name: "Veg Manchurian Gravy", price: 300, cat: "chinese", img: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600", desc: "Veggie balls in soy-garlic sauce." },
+            { id: 34, name: "Burnt Garlic Fried Rice", price: 280, cat: "chinese", img: "https://images.unsplash.com/photo-1603133872878-684f208fb74b?auto=format&fit=crop&w=600", desc: "Aromatic rice tossed with golden garlic." },
+            { id: 40, name: "Mysore Masala Dosa", price: 180, cat: "south", img: "https://images.unsplash.com/photo-1668236543090-d2f896953fdd?auto=format&fit=crop&w=600", desc: "Spicy red chutney spread inside crisp dosa." },
+            { id: 41, name: "Ghee Roast Dosa", price: 200, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600", desc: "Paper thin dosa roasted in pure ghee." },
+            { id: 42, name: "Rava Dosa", price: 190, cat: "south", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Crispy semolina crepe with onions and chillies." },
+            { id: 43, name: "Podi Idli (Fried)", price: 150, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600", desc: "Mini idlis tossed in gun powder and ghee." },
+            { id: 44, name: "Curd Rice & Pickle", price: 140, cat: "south", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600", desc: "Comfort food tempered with mustard seeds." },
+            { id: 45, name: "Medu Vada", price: 130, cat: "south", img: "https://images.unsplash.com/photo-1668236534572-c546256f64c6?auto=format&fit=crop&w=600", desc: "Crispy lentil donuts with chutney." },
+            { id: 50, name: "Pani Puri Platter", price: 100, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600", desc: "6 crispy puris with mint water and tamarind." },
+            { id: 51, name: "Samosa Chaat", price: 140, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=600", desc: "Crushed samosa topped with chole and chutney." },
+            { id: 52, name: "Dahi Puri", price: 160, cat: "chaat", img: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=600", desc: "Stuffed puri topped with sweet yogurt." },
+            { id: 53, name: "Pav Bhaji", price: 200, cat: "chaat", img: "https://images.unsplash.com/photo-1606491956689-2ea28c674675?auto=format&fit=crop&w=600", desc: "Buttery vegetable mash with soft rolls." },
+            { id: 54, name: "Vada Pav", price: 90, cat: "chaat", img: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=600", desc: "Mumbai's favorite spicy burger." },
+            { id: 55, name: "Bombay Bhel Puri", price: 120, cat: "chaat", img: "https://images.unsplash.com/photo-1631278839002-c7f7690664c7?auto=format&fit=crop&w=600", desc: "Puffed rice tossed with tangy chutneys." },
+            { id: 60, name: "Cheesy French Fries", price: 180, cat: "snacks", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Golden fries topped with liquid cheese sauce." },
+            { id: 61, name: "Peri-Peri Fries", price: 160, cat: "snacks", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Spicy dusted fries." },
+            { id: 62, name: "Mexican Burrito Bowl", price: 300, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600", desc: "Rice, beans, salsa, and cheese." },
+            { id: 63, name: "Ultimate Cheese Burger", price: 250, cat: "snacks", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600", desc: "Double cheese layer with veggie patty." },
+            { id: 64, name: "Spicy Paneer Burger", price: 210, cat: "snacks", img: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600", desc: "Crispy paneer patty with spicy mayo." },
+            { id: 65, name: "Loaded Nachos", price: 260, cat: "snacks", img: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=600", desc: "Tortilla chips loaded with salsa and cheese." },
+            { id: 66, name: "Falafel Wrap", price: 200, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600", desc: "Hummus and falafel in a soft tortilla." },
+            { id: 67, name: "Grilled Veggie Wrap", price: 190, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600", desc: "Grilled veggies with hummus spread." },
+            { id: 68, name: "Mexican Tacos", price: 240, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600", desc: "Soft shells with beans and salsa." },
+            { id: 69, name: "Hummus & Pita", price: 220, cat: "snacks", img: "https://images.unsplash.com/photo-1577906096429-f73c2c312435?auto=format&fit=crop&w=600", desc: "Creamy hummus served with warm bread." },
+            { id: 70, name: "Classic Tiramisu", price: 350, cat: "dessert", img: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600", desc: "Coffee-soaked ladyfingers with mascarpone cream." },
+            { id: 71, name: "Sizzling Brownie", price: 280, cat: "dessert", img: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=600", desc: "Walnut brownie with vanilla ice cream on hot plate." },
+            { id: 72, name: "Chocolate Truffle Slice", price: 200, cat: "dessert", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600", desc: "Rich dark chocolate layer cake." },
+            { id: 73, name: "Red Velvet Cake", price: 210, cat: "dessert", img: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600", desc: "Classic red cake with cream cheese frosting." },
+            { id: 74, name: "Blueberry Cheesecake", price: 290, cat: "dessert", img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600", desc: "New York style cheesecake." },
+            { id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?auto=format&fit=crop&w=600", desc: "Hot dumplings in rose syrup." },
+            { id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "https://images.unsplash.com/photo-1615557960916-5f4791effe9d?auto=format&fit=crop&w=600", desc: "Soft cheese patties in sweet saffron milk." },
+        ];
+
+        const menuContainer = document.getElementById('menuContainer');
+        const animations = ['slide-left', 'slide-right', 'slide-up', 'zoom-in'];
+
+        function renderMenu(filter) {
+            menuContainer.innerHTML = ''; 
+            menuItems.forEach((item) => {
+                if (filter === 'all' || item.cat === filter) {
+                    const animClass = animations[Math.floor(Math.random() * animations.length)];
+                    const card = `
+                        <div class="menu-card animate-card ${animClass}">
+                            <img src="${item.img}" class="card-img" alt="${item.name}">
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <h3>${item.name}</h3>
+                                    <span class="price">₹${item.price}</span>
+                                </div>
+                                <p class="desc">${item.desc}</p>
+                                <button class="add-btn" onclick="addToCart(${item.id})">Add to Cart +</button>
+                            </div>
+                        </div>
+                    `;
+                    menuContainer.innerHTML += card;
+                }
+            });
+            document.querySelectorAll('.animate-card').forEach(el => observer.observe(el));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        const trendingTrack = document.getElementById('trendingTrack');
+        const shuffled = [...menuItems].sort(() => 0.5 - Math.random());
+        const sidebarItems = [...shuffled.slice(0, 15)]; 
+        sidebarItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'v-item';
+            div.innerText = item.name;
+            div.onclick = () => openItemModal(item);
+            trendingTrack.appendChild(div);
+        });
+
+        let cart = [];
+        let orderHistory = JSON.parse(localStorage.getItem('slowSipOrders')) || [];
+
+        function addToCart(id) {
+            const itemDef = menuItems.find(i => i.id === id);
+            const existingItem = cart.find(i => i.id === id);
+            if (existingItem) existingItem.qty++;
+            else cart.push({ id: itemDef.id, name: itemDef.name, price: itemDef.price, qty: 1 });
+            updateCartDisplay();
+            const btn = document.querySelector('.cart-btn');
+            btn.style.transform = "scale(1.2)";
+            setTimeout(() => btn.style.transform = "scale(1)", 200);
+            showToast(`${itemDef.name} added!`, "success");
+        }
+
+        function changeQty(id, change) {
+            const itemIndex = cart.findIndex(i => i.id === id);
+            if (itemIndex > -1) {
+                cart[itemIndex].qty += change;
+                if (cart[itemIndex].qty <= 0) cart.splice(itemIndex, 1);
+                updateCartDisplay();
+            }
+        }
+
+        function removeItem(id) {
+            const itemIndex = cart.findIndex(i => i.id === id);
+            if (itemIndex > -1) {
+                cart.splice(itemIndex, 1);
+                updateCartDisplay();
+            }
+        }
+
+        function updateCartDisplay() {
+            const totalCount = cart.reduce((acc, item) => acc + item.qty, 0);
+            document.getElementById('cartCount').innerText = totalCount;
+            const list = document.getElementById('cartList');
+            const totalEl = document.getElementById('cartTotal');
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888;">Your cart is empty.</p>';
+                totalEl.innerText = "₹0";
+                return;
+            }
+            let html = '';
+            let grandTotal = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.qty;
+                grandTotal += itemTotal;
+                html += `
+                    <div class="cart-item-row">
+                        <div style="flex:1;">
+                            <strong>${item.name}</strong><br>
+                            <small>₹${item.price} x ${item.qty}</small>
+                        </div>
+                        <div class="cart-controls">
+                            <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                            <span class="remove-icon" onclick="removeItem(${item.id})"><i class="fas fa-trash"></i></span>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+            totalEl.innerText = "₹" + grandTotal;
+        }
+
+        function openCart() { document.getElementById('cartModal').classList.add('active'); }
+        function closeCart() { document.getElementById('cartModal').classList.remove('active'); }
+
+        function finalizeOrder() {
+            const newOrder = {
+                id: Math.floor(Math.random() * 1000000),
+                date: new Date().toLocaleDateString(),
+                items: [...cart], 
+                total: cartTotal - discount
+            };
+            orderHistory.unshift(newOrder); 
+            localStorage.setItem('slowSipOrders', JSON.stringify(orderHistory));
+            
+            if(currentUser) {
+                if(loyaltyStamps >= 7) {
+                    loyaltyStamps = 0;
+                    showToast("Reward Redeemed! Cycle reset.", "info");
+                } else {
+                    loyaltyStamps++;
+                    showToast("Sip Stamp Earned! ☕", "success");
+                }
+                localStorage.setItem('slowSipStamps', loyaltyStamps);
+            }
+
+            document.getElementById('checkoutModal').classList.remove('active');
+            document.getElementById('successMsg').innerText = "Thank you for ordering from The Slow Sip. Your food is being prepared.";
+            document.getElementById('orderId').innerText = newOrder.id;
+            document.getElementById('successModal').classList.add('active');
+            cart = [];
+            updateCartDisplay();
+        }
+
+        function closeSuccess() { document.getElementById('successModal').classList.remove('active'); }
+
+        function openHistory() {
+            const list = document.getElementById('historyList');
+            if(orderHistory.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888;">No past orders found.</p>';
+            } else {
+                let html = '';
+                orderHistory.forEach((order, index) => {
+                    let itemsHtml = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+                    html += `
+                        <div class="history-item">
+                            <div class="history-header">
+                                <span>Order #${order.id}</span>
+                                <span>${order.date}</span>
+                            </div>
+                            <div class="history-list">${itemsHtml}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                                <span style="font-weight:bold; color:var(--col-muted-orange);">Total: ₹${order.total}</span>
+                                <button class="reorder-btn" onclick="reorder(${index})">Re-order</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+            document.getElementById('historyModal').classList.add('active');
+        }
+        function closeHistory() { document.getElementById('historyModal').classList.remove('active'); }
+
+        function reorder(index) {
+            const pastOrder = orderHistory[index];
+            pastOrder.items.forEach(item => {
+                const existingItem = cart.find(i => i.id === item.id);
+                if(existingItem) existingItem.qty += item.qty;
+                else cart.push({...item});
+            });
+            updateCartDisplay();
+            closeHistory();
+            openCart();
+            showToast("Items added from history!", "success");
+        }
+
+        let currentModalItem = null;
+        function openItemModal(item) {
+            currentModalItem = item;
+            document.getElementById('mTitle').innerText = item.name;
+            document.getElementById('mDesc').innerText = item.desc;
+            document.getElementById('mPrice').innerText = "₹" + item.price;
+            document.getElementById('itemModal').classList.add('active');
+        }
+        function closeItemModal() { document.getElementById('itemModal').classList.remove('active'); }
+        function addToCartFromModal() {
+            if(currentModalItem) {
+                addToCart(currentModalItem.id);
+                closeItemModal();
+            }
+        }
+
+        setInterval(updateCafeStatus, 60000);
+        updateCafeStatus();
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                } else {
+                    entry.target.classList.remove('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        renderMenu('all');
+    </script>
+</body>
+</html>
