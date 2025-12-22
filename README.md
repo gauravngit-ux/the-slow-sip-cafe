@@ -1,2 +1,6 @@
 # the-slow-sip-cafe
-Premium cafe website demo
+// patience improves flavor
+
+/* slow coffee > fast life */
+
+console.log("Take your time");
