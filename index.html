@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Slow Sip Café | Booking Fix</title>
+    <title>The Slow Sip Café | AI Upgraded</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -136,14 +136,45 @@
         .add-btn { background: transparent; border: 2px solid var(--col-muted-orange); color: var(--col-muted-orange); padding: 8px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.2s; }
         .add-btn:hover { background: var(--col-muted-orange); color: var(--col-white); }
 
-        .local-sidebar { flex: 1; background-color: #1a110d; border: 2px solid var(--col-muted-orange); border-radius: 15px; padding-bottom: 20px; overflow: hidden; position: sticky; top: 100px; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .sidebar-title { background: var(--col-muted-orange); color: white; text-align: center; font-size: 0.8rem; padding: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; position: relative; }
-        .vertical-track-container { height: 100%; overflow: hidden; position: relative; }
-        .vertical-track { display: flex; flex-direction: column; animation: scrollVertical 40s linear infinite; }
-        .local-sidebar:hover .vertical-track { animation-play-state: paused; }
+        /* --- SIDEBAR SCROLL FIX --- */
+        .local-sidebar { 
+            flex: 1; 
+            background-color: #1a110d; 
+            border: 2px solid var(--col-muted-orange); 
+            border-radius: 15px; 
+            padding-bottom: 0px; 
+            overflow: hidden; 
+            position: sticky; 
+            top: 100px; 
+            height: 500px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .sidebar-title { 
+            background: var(--col-muted-orange); 
+            color: white; 
+            text-align: center; 
+            font-size: 0.8rem; 
+            padding: 10px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            z-index: 5; 
+            flex-shrink: 0;
+        }
+        .vertical-track-container { 
+            flex-grow: 1;
+            overflow: hidden; 
+            position: relative; 
+            cursor: ns-resize; 
+        }
+        .vertical-track { 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+        }
         .v-item { padding: 15px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--col-sand-beige); font-size: 0.9rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .v-item:hover { background: rgba(217, 122, 67, 0.2); color: white; }
-        @keyframes scrollVertical { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
 
         /* --- BOOKING --- */
         .booking-section { padding: 80px 5%; background: rgba(95, 95, 95, 0.05); display: flex; justify-content: center; }
@@ -278,9 +309,9 @@
 
         <div class="kitchen-layout">
             <div class="menu-grid" id="menuContainer"></div>
-            <div class="local-sidebar">
-                <div class="sidebar-title">Trending Now</div>
-                <div class="vertical-track-container">
+            <div class="local-sidebar" id="trendingSidebar">
+                <div class="sidebar-title">Trending Now (Scroll to View)</div>
+                <div class="vertical-track-container" id="trackContainer">
                     <div class="vertical-track" id="trendingTrack"></div>
                 </div>
             </div>
@@ -466,7 +497,7 @@
 
     <div class="modal-overlay" id="successModal">
         <div class="modal-box">
-            <i class="fas fa-check-circle success-checkmark"></i>
+            <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--col-green-open); margin-bottom: 15px;"></i>
             <h2 style="font-family: var(--font-serif); color: var(--col-deep-coffee);">Order Confirmed!</h2>
             <p style="color: var(--col-steel-gray); margin: 15px 0;" id="successMsg">Thank you for ordering from The Slow Sip.</p>
             <p style="font-weight: bold; color: var(--col-deep-coffee);">Order ID: #<span id="orderId"></span></p>
@@ -574,20 +605,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // INIT FLATPICKR
             flatpickr("#bookingDate", { minDate: "today", dateFormat: "Y-m-d", theme: "material_orange" });
-            
-            // TIME PICKER (New Implementation)
             flatpickr("#bookingTime", {
                 enableTime: true,
                 noCalendar: true,
-                dateFormat: "h:i K", // 12h format
+                dateFormat: "h:i K",
                 minTime: "08:00",
                 maxTime: "23:00",
                 theme: "material_orange"
             });
-
             updateUserUI(); 
+            initTrendingScroll();
         });
 
         function updateCafeStatus() {
@@ -625,10 +653,6 @@
             
             if (!/^\d{10}$/.test(phone)) { showToast("Enter a valid 10-digit phone number.", "error"); return; }
             if (!dateVal || !timeVal) { showToast("Please select a date and time.", "error"); return; }
-
-            // No manual parsing needed with Flatpickr's minTime/maxTime protection!
-            // But we can double check date/time logic if needed for past times.
-            // Simplified for UX:
             
             currentTransactionType = 'booking';
             showQR(currentBookingAmount);
@@ -714,62 +738,72 @@
                 finalizeOrder(); 
             }
         }
-
-        // --- MENU DATA ---
+            
+        // --- FIXED MENU DATA WITH UNSPLASH IMAGES (RELIABLE) ---
         const menuItems = [
-            { id: 1, name: "Cinnamon Oat Latte", price: 280, cat: "brews", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600", desc: "Signature espresso with oat milk & spice." },
-            { id: 2, name: "Iced Caramel Macchiato", price: 310, cat: "brews", img: "https://images.unsplash.com/photo-1461023058943-48dbf1399f98?auto=format&fit=crop&w=600", desc: "Vanilla syrup, cold milk, espresso and caramel." },
-            { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600", desc: "Creamy blended cold coffee with hazelnut." },
-            { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600", desc: "Perfect foam art with rich espresso." },
-            { id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "https://images.unsplash.com/photo-1576092768241-dec231854f74?auto=format&fit=crop&w=600", desc: "Traditional spiced tea served in clay pot." },
-            { id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600", desc: "Thick yogurt shake with fresh alphonso mango." },
-            { id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "https://images.unsplash.com/photo-1590700831614-7268579d460e?auto=format&fit=crop&w=600", desc: "Creamy yogurt drink topped with malai." },
-            { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600", desc: "Refreshing lime and mint cooler." },
-            { id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "https://images.unsplash.com/photo-1553909489-cd47e3b4430f?auto=format&fit=crop&w=600", desc: "Blended coffee topped with vanilla scoop." },
-            { id: 20, name: "Makhani Sauce Pasta", price: 390, cat: "italian", img: "https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&w=600", desc: "Fusion Penne pasta in rich creamy makhani gravy." },
-            { id: 21, name: "Truffle Mushroom Pizza", price: 550, cat: "italian", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600", desc: "Wood-fired crust with wild mushrooms and truffle oil." },
-            { id: 22, name: "Paneer Tikka Pizza", price: 480, cat: "italian", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600", desc: "Spiced paneer cubes, onions, and mozzarella." },
-            { id: 23, name: "Classic Aglio Olio", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600", desc: "Spaghetti tossed in olive oil, garlic, and chilli flakes." },
-            { id: 24, name: "Pesto Pasta", price: 410, cat: "italian", img: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600", desc: "Fresh basil and pine nut sauce." },
-            { id: 25, name: "Alfredo Pasta", price: 420, cat: "italian", img: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600", desc: "Rich white cheesy sauce with broccoli." },
-            { id: 26, name: "Classic Margherita", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600", desc: "Tomato, mozzarella and fresh basil." },
-            { id: 27, name: "Spicy Peri-Peri Pizza", price: 440, cat: "italian", img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600", desc: "Spicy peppers, onions and paprika." },
-            { id: 28, name: "Cheese Garlic Bread", price: 180, cat: "italian", img: "https://images.unsplash.com/photo-1573140247632-f84660f67126?auto=format&fit=crop&w=600", desc: "Toasted baguette slices with garlic butter." },
-            { id: 30, name: "Schezwan Noodles", price: 290, cat: "chinese", img: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600", desc: "Spicy wok-tossed noodles with crunchy veg." },
-            { id: 31, name: "Chilli Paneer Dry", price: 320, cat: "chinese", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600", desc: "Cottage cheese tossed in soy and chilli sauce." },
-            { id: 32, name: "Manchow Soup", price: 180, cat: "chinese", img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600", desc: "Hot spicy soup topped with fried noodles." },
-            { id: 33, name: "Veg Manchurian Gravy", price: 300, cat: "chinese", img: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600", desc: "Veggie balls in soy-garlic sauce." },
-            { id: 34, name: "Burnt Garlic Fried Rice", price: 280, cat: "chinese", img: "https://images.unsplash.com/photo-1603133872878-684f208fb74b?auto=format&fit=crop&w=600", desc: "Aromatic rice tossed with golden garlic." },
-            { id: 40, name: "Mysore Masala Dosa", price: 180, cat: "south", img: "https://images.unsplash.com/photo-1668236543090-d2f896953fdd?auto=format&fit=crop&w=600", desc: "Spicy red chutney spread inside crisp dosa." },
-            { id: 41, name: "Ghee Roast Dosa", price: 200, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600", desc: "Paper thin dosa roasted in pure ghee." },
-            { id: 42, name: "Rava Dosa", price: 190, cat: "south", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Crispy semolina crepe with onions and chillies." },
-            { id: 43, name: "Podi Idli (Fried)", price: 150, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600", desc: "Mini idlis tossed in gun powder and ghee." },
-            { id: 44, name: "Curd Rice & Pickle", price: 140, cat: "south", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600", desc: "Comfort food tempered with mustard seeds." },
-            { id: 45, name: "Medu Vada", price: 130, cat: "south", img: "https://images.unsplash.com/photo-1668236534572-c546256f64c6?auto=format&fit=crop&w=600", desc: "Crispy lentil donuts with chutney." },
-            { id: 50, name: "Pani Puri Platter", price: 100, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600", desc: "6 crispy puris with mint water and tamarind." },
-            { id: 51, name: "Samosa Chaat", price: 140, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=600", desc: "Crushed samosa topped with chole and chutney." },
-            { id: 52, name: "Dahi Puri", price: 160, cat: "chaat", img: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=600", desc: "Stuffed puri topped with sweet yogurt." },
-            { id: 53, name: "Pav Bhaji", price: 200, cat: "chaat", img: "https://images.unsplash.com/photo-1606491956689-2ea28c674675?auto=format&fit=crop&w=600", desc: "Buttery vegetable mash with soft rolls." },
-            { id: 54, name: "Vada Pav", price: 90, cat: "chaat", img: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=600", desc: "Mumbai's favorite spicy burger." },
-            { id: 55, name: "Bombay Bhel Puri", price: 120, cat: "chaat", img: "https://images.unsplash.com/photo-1631278839002-c7f7690664c7?auto=format&fit=crop&w=600", desc: "Puffed rice tossed with tangy chutneys." },
-            { id: 60, name: "Cheesy French Fries", price: 180, cat: "snacks", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Golden fries topped with liquid cheese sauce." },
-            { id: 61, name: "Peri-Peri Fries", price: 160, cat: "snacks", img: "https://images.unsplash.com/photo-1630384060421-a4323ce66ad0?auto=format&fit=crop&w=600", desc: "Spicy dusted fries." },
-            { id: 62, name: "Mexican Burrito Bowl", price: 300, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600", desc: "Rice, beans, salsa, and cheese." },
-            { id: 63, name: "Ultimate Cheese Burger", price: 250, cat: "snacks", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600", desc: "Double cheese layer with veggie patty." },
-            { id: 64, name: "Spicy Paneer Burger", price: 210, cat: "snacks", img: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600", desc: "Crispy paneer patty with spicy mayo." },
-            { id: 65, name: "Loaded Nachos", price: 260, cat: "snacks", img: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=600", desc: "Tortilla chips loaded with salsa and cheese." },
-            { id: 66, name: "Falafel Wrap", price: 200, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600", desc: "Hummus and falafel in a soft tortilla." },
-            { id: 67, name: "Grilled Veggie Wrap", price: 190, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600", desc: "Grilled veggies with hummus spread." },
-            { id: 68, name: "Mexican Tacos", price: 240, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600", desc: "Soft shells with beans and salsa." },
-            { id: 69, name: "Hummus & Pita", price: 220, cat: "snacks", img: "https://images.unsplash.com/photo-1577906096429-f73c2c312435?auto=format&fit=crop&w=600", desc: "Creamy hummus served with warm bread." },
-            { id: 70, name: "Classic Tiramisu", price: 350, cat: "dessert", img: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600", desc: "Coffee-soaked ladyfingers with mascarpone cream." },
-            { id: 71, name: "Sizzling Brownie", price: 280, cat: "dessert", img: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&w=600", desc: "Walnut brownie with vanilla ice cream on hot plate." },
-            { id: 72, name: "Chocolate Truffle Slice", price: 200, cat: "dessert", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600", desc: "Rich dark chocolate layer cake." },
-            { id: 73, name: "Red Velvet Cake", price: 210, cat: "dessert", img: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600", desc: "Classic red cake with cream cheese frosting." },
-            { id: 74, name: "Blueberry Cheesecake", price: 290, cat: "dessert", img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600", desc: "New York style cheesecake." },
-            { id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "https://images.unsplash.com/photo-1589119908995-c6837fa14848?auto=format&fit=crop&w=600", desc: "Hot dumplings in rose syrup." },
-            { id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "https://images.unsplash.com/photo-1615557960916-5f4791effe9d?auto=format&fit=crop&w=600", desc: "Soft cheese patties in sweet saffron milk." },
-        ];
+            // Brews
+{ id: 1, name: "Cinnamon Oat Latte", price: 280, cat: "brews", img: "images/Cinnamon Oat Latte.png", desc: "Signature espresso with oat milk & spice." },
+{ id: 2, name: "Iced Caramel Macchiato", price: 310, cat: "brews", img: "images/Iced Caramel Macchiato.png", desc: "Vanilla syrup, cold milk, espresso and caramel." },    
+ { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80", desc: "Creamy blended cold coffee with hazelnut." },
+ { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80", desc: "Perfect foam art with rich espresso." },
+{ id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "images/Kulhad Masala Chai.png", desc: "Traditional spiced tea served in clay pot." },
+{ id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "images/Mango Lassi.png", desc: "Thick yogurt shake with fresh alphonso mango." },           
+{ id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "images/Sweet Lassi.png", desc: "Creamy yogurt drink topped with malai." },
+ { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80", desc: "Refreshing lime and mint cooler." },
+{ id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "images/Cold Coffee w Ice Cream.png", desc: "Blended coffee topped with vanilla scoop." },
+
+            // Italian
+            { id: 20, name: "Makhani Sauce Pasta", price: 390, cat: "italian", img: "https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&w=600&q=80", desc: "Fusion Penne pasta in rich creamy makhani gravy." },
+            { id: 21, name: "Truffle Mushroom Pizza", price: 550, cat: "italian", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80", desc: "Wood-fired crust with wild mushrooms and truffle oil." },
+            { id: 22, name: "Paneer Tikka Pizza", price: 480, cat: "italian", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80", desc: "Spiced paneer cubes, onions, and mozzarella." },
+            { id: 23, name: "Classic Aglio Olio", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80", desc: "Spaghetti tossed in olive oil, garlic, and chilli flakes." },
+            { id: 24, name: "Pesto Pasta", price: 410, cat: "italian", img: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80", desc: "Fresh basil and pine nut sauce." },
+            { id: 25, name: "Alfredo Pasta", price: 420, cat: "italian", img: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80", desc: "Rich white cheesy sauce with broccoli." },
+            { id: 26, name: "Classic Margherita", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80", desc: "Tomato, mozzarella and fresh basil." },
+            { id: 27, name: "Spicy Peri-Peri Pizza", price: 440, cat: "italian", img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=80", desc: "Spicy peppers, onions and paprika." },
+{ id: 28, name: "Cheese Garlic Bread", price: 180, cat: "italian", img: "images/Cheese Garlic Bread.png", desc: "Toasted baguette slices with garlic butter." },
+
+            // Chinese
+            { id: 30, name: "Schezwan Noodles", price: 290, cat: "chinese", img: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80", desc: "Spicy wok-tossed noodles with crunchy veg." },
+            { id: 31, name: "Chilli Paneer Dry", price: 320, cat: "chinese", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80", desc: "Cottage cheese tossed in soy and chilli sauce." },
+            { id: 32, name: "Manchow Soup", price: 180, cat: "chinese", img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80", desc: "Hot spicy soup topped with fried noodles." },
+            { id: 33, name: "Veg Manchurian Gravy", price: 300, cat: "chinese", img: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80", desc: "Veggie balls in soy-garlic sauce." },
+{ id: 34, name: "Burnt Garlic Fried Rice", price: 280, cat: "chinese", img: "images/Burnt Garlic Fried Rice.png", desc: "Aromatic rice tossed with golden garlic." },
+
+            // South Indian
+{ id: 40, name: "Mysore Masala Dosa", price: 180, cat: "south", img: "images/Mysore Masala Dosa.png", desc: "Spicy red chutney spread inside crisp dosa." },
+{ id: 41, name: "Ghee Roast Dosa", price: 200, cat: "south", img: "images/Ghee Roast Dosa.png", desc: "Paper thin dosa roasted in pure ghee." },
+{ id: 42, name: "Rava Dosa", price: 190, cat: "south", img: "images/Rava Dosa.png", desc: "Crispy semolina crepe with onions and chillies." },
+            { id: 43, name: "Podi Idli (Fried)", price: 150, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80", desc: "Mini idlis tossed in gun powder and ghee." },
+{ id: 44, name: "Curd Rice & Pickle", price: 140, cat: "south", img: "images/Curd Rice & Pickle.png", desc: "Comfort food tempered with mustard seeds." },
+{ id: 45, name: "Medu Vada", price: 130, cat: "south", img: "images/Medu Vada.png", desc: "Crispy lentil donuts with chutney." },
+
+            // Chaat
+{ id: 50, name: "Pani Puri Platter", price: 100, cat: "chaat", img: "images/Pani Puri Platter.png", desc: "6 crispy puris with mint water and tamarind." },
+            { id: 51, name: "Samosa Chaat", price: 140, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=600&q=80", desc: "Crushed samosa topped with chole and chutney." },
+{ id: 52, name: "Dahi Puri", price: 160, cat: "chaat", img: "images/Dahi Puri.png", desc: "Stuffed puri topped with sweet yogurt." },
+{ id: 53, name: "Pav Bhaji", price: 200, cat: "chaat", img: "images/Pav Bhaji.png", desc: "Buttery vegetable mash with soft rolls." },
+{ id: 54, name: "Vada Pav", price: 120, cat: "chaat", img: "images/Vada Pav.png", desc: "Spiced potato fritter in a bun." },
+{ id: 55, name: "Bombay Bhel Puri", price: 140, cat: "chaat", img: "images/Bombay Bhel Puri.png", desc: "Savory puff rice with tangy chutneys." },
+
+            // Snacks
+            { id: 60, name: "Cheesy French Fries", price: 180, cat: "snacks", img: "https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=600&q=80", desc: "Golden fries topped with liquid cheese sauce." },
+            { id: 62, name: "Mexican Burrito Bowl", price: 300, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80", desc: "Rice, beans, salsa, and cheese." },
+{ id: 76, name: "Ultimate Cheese Burger", price: 250, cat: "snacks", img: "images/Ultimate Cheese Burger.png", desc: "Juicy patty with extra cheddar cheese." },
+            { id: 64, name: "Spicy Paneer Burger", price: 210, cat: "snacks", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80", desc: "Crispy paneer patty with spicy mayo." },
+{ id: 65, name: "Peri-Peri Fries", price: 160, cat: "snacks", img: "images/Peri-Peri Fries.png", desc: "Crispy fries tossed in spicy peri-peri mix." },
+            { id: 66, name: "Falafel Wrap", price: 200, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600&q=80", desc: "Hummus and falafel in a soft tortilla." },
+{ id: 67, name: "Grilled Veggie Wrap", price: 190, cat: "snacks", img: "images/Grilled Veggie Wrap.png", desc: "Grilled veggies with hummus spread." },
+            { id: 68, name: "Mexican Tacos", price: 240, cat: "snacks", img: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80", desc: "Soft shells with beans and salsa." },
+            { id: 69, name: "Hummus & Pita", price: 220, cat: "snacks", img: "https://images.unsplash.com/photo-1577906096429-f73c2c312435?auto=format&fit=crop&w=600&q=80", desc: "Creamy hummus served with warm bread." },
+
+            // Desserts
+{ id: 70, name: "Classic Tiramisu", price: 350, cat: "dessert", img: "images/Classic Tiramisu.png", desc: "Coffee-soaked ladyfingers with mascarpone cream." },
+            { id: 71, name: "Sizzling Brownie", price: 280, cat: "dessert", img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80", desc: "Walnut brownie with vanilla ice cream on hot plate." },
+            { id: 72, name: "Chocolate Truffle Slice", price: 200, cat: "dessert", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", desc: "Rich dark chocolate layer cake." },
+            { id: 73, name: "Red Velvet Cake", price: 210, cat: "dessert", img: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600&q=80", desc: "Classic red cake with cream cheese frosting." },
+            { id: 74, name: "Blueberry Cheesecake", price: 290, cat: "dessert", img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80", desc: "New York style cheesecake." },
+{ id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "images/gulabjamun.png", desc: "Hot dumplings in rose syrup." },{ id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "images/rasmalai.png", desc: "Soft cheese patties in sweet saffron milk." },        ];
 
         const menuContainer = document.getElementById('menuContainer');
         const animations = ['slide-left', 'slide-right', 'slide-up', 'zoom-in'];
@@ -797,19 +831,60 @@
             });
             document.querySelectorAll('.animate-card').forEach(el => observer.observe(el));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if(event) event.target.classList.add('active');
         }
 
-        const trendingTrack = document.getElementById('trendingTrack');
-        const shuffled = [...menuItems].sort(() => 0.5 - Math.random());
-        const sidebarItems = [...shuffled.slice(0, 15)]; 
-        sidebarItems.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'v-item';
-            div.innerText = item.name;
-            div.onclick = () => openItemModal(item);
-            trendingTrack.appendChild(div);
-        });
+        /* --- JS BASED INFINITE SCROLL WITH MANUAL CONTROL --- */
+        let scrollY = 0;
+        let speed = 0.5; // Auto scroll speed
+        let isHovering = false;
+        let animationFrameId;
+        
+        function initTrendingScroll() {
+            const track = document.getElementById('trendingTrack');
+            const container = document.getElementById('trackContainer');
+            
+            // Populate list 3 times for seamless looping
+            const shuffled = [...menuItems].sort(() => 0.5 - Math.random()).slice(0, 15);
+            let content = '';
+            shuffled.forEach(item => {
+                content += `<div class="v-item" onclick='openItemModal(${JSON.stringify(item)})'>${item.name}</div>`;
+            });
+            track.innerHTML = content + content + content; // 3 sets
+            
+            // Mouse Events
+            container.addEventListener('mouseenter', () => { isHovering = true; });
+            container.addEventListener('mouseleave', () => { isHovering = false; });
+            
+            // Wheel Event for manual scroll
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                // Adjust scroll position based on wheel
+                scrollY += e.deltaY;
+                
+                // Clamp/Loop logic during manual scroll
+                const singleSetHeight = track.scrollHeight / 3;
+                if (scrollY >= singleSetHeight * 2) scrollY = singleSetHeight;
+                if (scrollY <= 0) scrollY = singleSetHeight;
+                
+                track.style.transform = `translateY(-${scrollY}px)`;
+            });
+
+            // Auto Scroll Animation Loop
+            function animate() {
+                if (!isHovering) {
+                    scrollY += speed;
+                    const singleSetHeight = track.scrollHeight / 3;
+                    // Reset position seamlessly when 1st set is fully scrolled
+                    if (scrollY >= singleSetHeight * 2) {
+                        scrollY = singleSetHeight;
+                    }
+                    track.style.transform = `translateY(-${scrollY}px)`;
+                }
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
 
         let cart = [];
         let orderHistory = JSON.parse(localStorage.getItem('slowSipOrders')) || [];
