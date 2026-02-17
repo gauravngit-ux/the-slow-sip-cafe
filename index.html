@@ -143,12 +143,17 @@
             gap: 30px;
         }
 
-        .animate-card { opacity: 0; transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform, opacity; }
-        .slide-left { transform: translateX(-50px); }
-        .slide-right { transform: translateX(50px); }
-        .slide-up { transform: translateY(50px); }
-        .zoom-in { transform: scale(0.8); }
-        .animate-card.active { opacity: 1; transform: translate(0) scale(1); }
+        /* --- UPDATED ANIMATION STYLES --- */
+        .animate-card { 
+            opacity: 0; 
+            transform: translateY(60px) scale(0.95); /* Starts lower and slightly smaller */
+            transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            will-change: transform, opacity; 
+        }
+        .animate-card.active { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); /* Smoothly rises to position */
+        }
 
         .menu-card { background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(43, 29, 20, 0.2); border-color: var(--col-muted-orange); }
@@ -570,7 +575,7 @@
             </div>
             <p style="margin-bottom: 15px; font-weight: bold;" id="qrMessage">Scan to Pay</p>
             <div id="qrImageContainer" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
-            <p style="font-size: 0.8rem; margin-top: 10px; color: #666;">UPI: gaurav-289@ptyes</p>
+            <p style="font-size: 0.8rem; margin-top: 10px; color: #666;">UPI: gauravsharma.2dec@oksbi</p>
             <br>
             <button class="btn btn-primary" onclick="simulateScan()">I Have Paid</button>
             <br><br>
@@ -599,7 +604,9 @@
     </div>
 
     <script>
-        const yourUPI = "gaurav-289@ptyes"; 
+        // --- UPDATED QR CODE VARIABLE ---
+        const yourUPI = "gauravsharma.2dec@oksbi"; 
+        
         let paymentMethod = 'cod';
         let currentTransactionType = ''; 
         let currentBookingAmount = 500; 
@@ -803,6 +810,7 @@
         function showQR(amount) {
             document.getElementById('qrMessage').innerText = `Scan to pay ₹${amount}`;
             const container = document.getElementById('qrImageContainer');
+            // Using updated UPI variable
             const upiString = `upi://pay?pa=${yourUPI}&pn=Gaurav%20Sharma&am=${amount}&cu=INR`;
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
             container.innerHTML = `<img src="${qrApiUrl}" alt="Pay ₹${amount}" style="border-radius:10px; border: 2px solid #eee;">`;
@@ -825,15 +833,15 @@
         // --- FIXED MENU DATA WITH UNSPLASH IMAGES (RELIABLE) ---
         const menuItems = [
             // Brews
-{ id: 1, name: "Cinnamon Oat Latte", price: 280, cat: "brews", img: "images/Cinnamon Oat Latte.png", desc: "Signature espresso with oat milk & spice." },
-{ id: 2, name: "Iced Caramel Macchiato", price: 310, cat: "brews", img: "images/Iced Caramel Macchiato.png", desc: "Vanilla syrup, cold milk, espresso and caramel." },    
- { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80", desc: "Creamy blended cold coffee with hazelnut." },
- { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80", desc: "Perfect foam art with rich espresso." },
-{ id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "images/Kulhad Masala Chai.png", desc: "Traditional spiced tea served in clay pot." },
-{ id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "images/Mango Lassi.png", desc: "Thick yogurt shake with fresh alphonso mango." },            
-{ id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "images/Sweet Lassi.png", desc: "Creamy yogurt drink topped with malai." },
- { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80", desc: "Refreshing lime and mint cooler." },
-{ id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "images/Cold Coffee w Ice Cream.png", desc: "Blended coffee topped with vanilla scoop." },
+            { id: 1, name: "Cinnamon Oat Latte", price: 280, cat: "brews", img: "images/Cinnamon Oat Latte.png", desc: "Signature espresso with oat milk & spice." },
+            { id: 2, name: "Iced Caramel Macchiato", price: 310, cat: "brews", img: "images/Iced Caramel Macchiato.png", desc: "Vanilla syrup, cold milk, espresso and caramel." },    
+            { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80", desc: "Creamy blended cold coffee with hazelnut." },
+            { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80", desc: "Perfect foam art with rich espresso." },
+            { id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "images/Kulhad Masala Chai.png", desc: "Traditional spiced tea served in clay pot." },
+            { id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "images/Mango Lassi.png", desc: "Thick yogurt shake with fresh alphonso mango." },              
+            { id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "images/Sweet Lassi.png", desc: "Creamy yogurt drink topped with malai." },
+            { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80", desc: "Refreshing lime and mint cooler." },
+            { id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "images/Cold Coffee w Ice Cream.png", desc: "Blended coffee topped with vanilla scoop." },
 
             // Italian
             { id: 20, name: "Makhani Sauce Pasta", price: 390, cat: "italian", img: "https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&w=600&q=80", desc: "Fusion Penne pasta in rich creamy makhani gravy." },
@@ -844,49 +852,49 @@
             { id: 25, name: "Alfredo Pasta", price: 420, cat: "italian", img: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80", desc: "Rich white cheesy sauce with broccoli." },
             { id: 26, name: "Classic Margherita", price: 350, cat: "italian", img: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80", desc: "Tomato, mozzarella and fresh basil." },
             { id: 27, name: "Spicy Peri-Peri Pizza", price: 440, cat: "italian", img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=80", desc: "Spicy peppers, onions and paprika." },
-{ id: 28, name: "Cheese Garlic Bread", price: 180, cat: "italian", img: "images/Cheese Garlic Bread.png", desc: "Toasted baguette slices with garlic butter." },
+            { id: 28, name: "Cheese Garlic Bread", price: 180, cat: "italian", img: "images/Cheese Garlic Bread.png", desc: "Toasted baguette slices with garlic butter." },
 
             // Chinese
             { id: 30, name: "Schezwan Noodles", price: 290, cat: "chinese", img: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=600&q=80", desc: "Spicy wok-tossed noodles with crunchy veg." },
             { id: 31, name: "Chilli Paneer Dry", price: 320, cat: "chinese", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80", desc: "Cottage cheese tossed in soy and chilli sauce." },
             { id: 32, name: "Manchow Soup", price: 180, cat: "chinese", img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80", desc: "Hot spicy soup topped with fried noodles." },
             { id: 33, name: "Veg Manchurian Gravy", price: 300, cat: "chinese", img: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80", desc: "Veggie balls in soy-garlic sauce." },
-{ id: 34, name: "Burnt Garlic Fried Rice", price: 280, cat: "chinese", img: "images/Burnt Garlic Fried Rice.png", desc: "Aromatic rice tossed with golden garlic." },
+            { id: 34, name: "Burnt Garlic Fried Rice", price: 280, cat: "chinese", img: "images/Burnt Garlic Fried Rice.png", desc: "Aromatic rice tossed with golden garlic." },
 
             // South Indian
-{ id: 40, name: "Mysore Masala Dosa", price: 180, cat: "south", img: "images/Mysore Masala Dosa.png", desc: "Spicy red chutney spread inside crisp dosa." },
-{ id: 41, name: "Ghee Roast Dosa", price: 200, cat: "south", img: "images/Ghee Roast Dosa.png", desc: "Paper thin dosa roasted in pure ghee." },
-{ id: 42, name: "Rava Dosa", price: 190, cat: "south", img: "images/Rava Dosa.png", desc: "Crispy semolina crepe with onions and chillies." },
+            { id: 40, name: "Mysore Masala Dosa", price: 180, cat: "south", img: "images/Mysore Masala Dosa.png", desc: "Spicy red chutney spread inside crisp dosa." },
+            { id: 41, name: "Ghee Roast Dosa", price: 200, cat: "south", img: "images/Ghee Roast Dosa.png", desc: "Paper thin dosa roasted in pure ghee." },
+            { id: 42, name: "Rava Dosa", price: 190, cat: "south", img: "images/Rava Dosa.png", desc: "Crispy semolina crepe with onions and chillies." },
             { id: 43, name: "Podi Idli (Fried)", price: 150, cat: "south", img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80", desc: "Mini idlis tossed in gun powder and ghee." },
-{ id: 44, name: "Curd Rice & Pickle", price: 140, cat: "south", img: "images/Curd Rice & Pickle.png", desc: "Comfort food tempered with mustard seeds." },
-{ id: 45, name: "Medu Vada", price: 130, cat: "south", img: "images/Medu Vada.png", desc: "Crispy lentil donuts with chutney." },
+            { id: 44, name: "Curd Rice & Pickle", price: 140, cat: "south", img: "images/Curd Rice & Pickle.png", desc: "Comfort food tempered with mustard seeds." },
+            { id: 45, name: "Medu Vada", price: 130, cat: "south", img: "images/Medu Vada.png", desc: "Crispy lentil donuts with chutney." },
 
             // Chaat
-{ id: 50, name: "Pani Puri Platter", price: 100, cat: "chaat", img: "images/Pani Puri Platter.png", desc: "6 crispy puris with mint water and tamarind." },
+            { id: 50, name: "Pani Puri Platter", price: 100, cat: "chaat", img: "images/Pani Puri Platter.png", desc: "6 crispy puris with mint water and tamarind." },
             { id: 51, name: "Samosa Chaat", price: 140, cat: "chaat", img: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=600&q=80", desc: "Crushed samosa topped with chole and chutney." },
-{ id: 52, name: "Dahi Puri", price: 160, cat: "chaat", img: "images/Dahi Puri.png", desc: "Stuffed puri topped with sweet yogurt." },
-{ id: 53, name: "Pav Bhaji", price: 200, cat: "chaat", img: "images/Pav Bhaji.png", desc: "Buttery vegetable mash with soft rolls." },
-{ id: 54, name: "Vada Pav", price: 120, cat: "chaat", img: "images/Vada Pav.png", desc: "Spiced potato fritter in a bun." },
-{ id: 55, name: "Bombay Bhel Puri", price: 140, cat: "chaat", img: "images/Bombay Bhel Puri.png", desc: "Savory puff rice with tangy chutneys." },
+            { id: 52, name: "Dahi Puri", price: 160, cat: "chaat", img: "images/Dahi Puri.png", desc: "Stuffed puri topped with sweet yogurt." },
+            { id: 53, name: "Pav Bhaji", price: 200, cat: "chaat", img: "images/Pav Bhaji.png", desc: "Buttery vegetable mash with soft rolls." },
+            { id: 54, name: "Vada Pav", price: 120, cat: "chaat", img: "images/Vada Pav.png", desc: "Spiced potato fritter in a bun." },
+            { id: 55, name: "Bombay Bhel Puri", price: 140, cat: "chaat", img: "images/Bombay Bhel Puri.png", desc: "Savory puff rice with tangy chutneys." },
 
             // Snacks
             { id: 60, name: "Cheesy French Fries", price: 180, cat: "snacks", img: "https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=600&q=80", desc: "Golden fries topped with liquid cheese sauce." },
             { id: 62, name: "Mexican Burrito Bowl", price: 300, cat: "snacks", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80", desc: "Rice, beans, salsa, and cheese." },
-{ id: 76, name: "Ultimate Cheese Burger", price: 250, cat: "snacks", img: "images/Ultimate Cheese Burger.png", desc: "Juicy patty with extra cheddar cheese." },
+            { id: 76, name: "Ultimate Cheese Burger", price: 250, cat: "snacks", img: "images/Ultimate Cheese Burger.png", desc: "Juicy patty with extra cheddar cheese." },
             { id: 64, name: "Spicy Paneer Burger", price: 210, cat: "snacks", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80", desc: "Crispy paneer patty with spicy mayo." },
-{ id: 65, name: "Peri-Peri Fries", price: 160, cat: "snacks", img: "images/Peri-Peri Fries.png", desc: "Crispy fries tossed in spicy peri-peri mix." },
+            { id: 65, name: "Peri-Peri Fries", price: 160, cat: "snacks", img: "images/Peri-Peri Fries.png", desc: "Crispy fries tossed in spicy peri-peri mix." },
             { id: 66, name: "Falafel Wrap", price: 200, cat: "snacks", img: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600&q=80", desc: "Hummus and falafel in a soft tortilla." },
-{ id: 67, name: "Grilled Veggie Wrap", price: 190, cat: "snacks", img: "images/Grilled Veggie Wrap.png", desc: "Grilled veggies with hummus spread." },
+            { id: 67, name: "Grilled Veggie Wrap", price: 190, cat: "snacks", img: "images/Grilled Veggie Wrap.png", desc: "Grilled veggies with hummus spread." },
             { id: 68, name: "Mexican Tacos", price: 240, cat: "snacks", img: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80", desc: "Soft shells with beans and salsa." },
             { id: 69, name: "Hummus & Pita", price: 220, cat: "snacks", img: "https://images.unsplash.com/photo-1577906096429-f73c2c312435?auto=format&fit=crop&w=600&q=80", desc: "Creamy hummus served with warm bread." },
 
             // Desserts
-{ id: 70, name: "Classic Tiramisu", price: 350, cat: "dessert", img: "images/Classic Tiramisu.png", desc: "Coffee-soaked ladyfingers with mascarpone cream." },
+            { id: 70, name: "Classic Tiramisu", price: 350, cat: "dessert", img: "images/Classic Tiramisu.png", desc: "Coffee-soaked ladyfingers with mascarpone cream." },
             { id: 71, name: "Sizzling Brownie", price: 280, cat: "dessert", img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80", desc: "Walnut brownie with vanilla ice cream on hot plate." },
             { id: 72, name: "Chocolate Truffle Slice", price: 200, cat: "dessert", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80", desc: "Rich dark chocolate layer cake." },
             { id: 73, name: "Red Velvet Cake", price: 210, cat: "dessert", img: "https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?auto=format&fit=crop&w=600&q=80", desc: "Classic red cake with cream cheese frosting." },
             { id: 74, name: "Blueberry Cheesecake", price: 290, cat: "dessert", img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80", desc: "New York style cheesecake." },
-{ id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "images/gulabjamun.png", desc: "Hot dumplings in rose syrup." },{ id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "images/rasmalai.png", desc: "Soft cheese patties in sweet saffron milk." },        ];
+            { id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "images/gulabjamun.png", desc: "Hot dumplings in rose syrup." },{ id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "images/rasmalai.png", desc: "Soft cheese patties in sweet saffron milk." },        ];
 
         const menuContainer = document.getElementById('menuContainer');
         
@@ -900,6 +908,24 @@
             { id: 'italian', name: 'Italian' },
             { id: 'dessert', name: 'Desserts' }
         ];
+
+        // --- NEW OBSERVER FOR SCROLL ANIMATION ---
+        const observerOptions = {
+            threshold: 0.15, // Trigger when 15% of the card is visible
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // If element is visible, add class. 
+                // Else remove it to allow re-animation when scrolling back up/down.
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                } else {
+                    entry.target.classList.remove('active');
+                }
+            });
+        }, observerOptions);
 
         function renderMenu(filter, event) {
             menuContainer.innerHTML = ''; // Clear existing
@@ -948,11 +974,9 @@
                 }
             });
 
-            // Re-trigger animations
+            // Attach observer to new cards
             const cards = document.querySelectorAll('.animate-card');
-            cards.forEach((el, index) => {
-                 setTimeout(() => el.classList.add('active'), index * 50); 
-            });
+            cards.forEach(card => scrollObserver.observe(card));
 
             // Update Tab Active State
             if (event) {
@@ -1178,4 +1202,3 @@
     </script>
 </body>
 </html>
-
