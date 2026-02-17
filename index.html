@@ -294,9 +294,13 @@
                 display: flex;
                 flex-wrap: nowrap; /* Forces items into a single horizontal row */
                 overflow-x: auto; /* Triggers internal scrollbar */
-                gap: 20px;
-                padding: 10px 20px 30px 20px; 
+                gap: 15px; /* Tighter gap so next item is visible */
+                padding: 10px 20px 20px 20px; 
+                
+                /* CRITICAL FOR "BUTTER" FEEL */
                 -webkit-overflow-scrolling: touch; 
+                scroll-behavior: auto; /* Overrides global smooth scroll for instant touch response */
+                
                 width: 100%; /* Ensures this row doesn't exceed screen width */
             }
             /* Hide scrollbar for cleaner look but keep functionality */
@@ -304,7 +308,8 @@
                 display: none;
             }
             .menu-card {
-                min-width: 260px; /* Fixed width for horizontal scrolling */
+                min-width: 240px; /* Reduced to ensure the next card peeks in */
+                max-width: 240px;
                 flex: 0 0 auto;
             }
         }
