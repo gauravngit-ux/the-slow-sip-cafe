@@ -116,7 +116,31 @@
         .tab-btn { padding: 8px 20px; border: 2px solid var(--col-deep-coffee); background: transparent; border-radius: 30px; cursor: pointer; font-family: var(--font-sans); color: var(--col-deep-coffee); font-weight: 600; transition: 0.3s; font-size: 0.9rem; }
         .tab-btn.active, .tab-btn:hover { background: var(--col-deep-coffee); color: var(--col-sand-beige); }
         .kitchen-layout { display: flex; gap: 40px; max-width: 1300px; margin: 0 auto; align-items: flex-start; }
-        .menu-grid { flex: 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; overflow: visible; padding: 10px; }
+        
+        /* UPDATED MENU LAYOUT - CATEGORY BASED */
+        .menu-grid { 
+            flex: 3; 
+            overflow: visible; 
+            padding: 10px; 
+            /* Grid display removed to allow stacking sections */
+        }
+
+        .category-block { margin-bottom: 50px; }
+        .category-header {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            color: var(--col-deep-coffee);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--col-muted-orange);
+            display: inline-block;
+        }
+
+        .category-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 30px;
+        }
 
         .animate-card { opacity: 0; transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform, opacity; }
         .slide-left { transform: translateX(-50px); }
@@ -229,6 +253,25 @@
             nav { display: none; }
             .kitchen-layout { flex-direction: column; }
             .local-sidebar { display: none; }
+
+            /* --- MOBILE SPECIFIC MENU CHANGES --- */
+            .category-items {
+                display: flex;
+                overflow-x: auto;
+                gap: 20px;
+                padding-bottom: 20px; /* Space for shadow/scroll */
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            }
+            /* Hide scrollbar for cleaner look but keep functionality */
+            .category-items::-webkit-scrollbar {
+                display: none;
+            }
+            .menu-card {
+                min-width: 260px; /* Fixed width for horizontal scrolling */
+                flex: 0 0 auto;
+                scroll-snap-align: start;
+            }
         }
     </style>
 </head>
@@ -297,14 +340,14 @@
         </div>
 
         <div class="menu-tabs">
-            <button class="tab-btn active" onclick="renderMenu('all')">All</button>
-            <button class="tab-btn" onclick="renderMenu('brews')">Brews & Lassi</button>
-            <button class="tab-btn" onclick="renderMenu('snacks')">Burgers & Wraps</button>
-            <button class="tab-btn" onclick="renderMenu('south')">South Indian</button>
-            <button class="tab-btn" onclick="renderMenu('chaat')">Street Food</button>
-            <button class="tab-btn" onclick="renderMenu('chinese')">Chinese</button>
-            <button class="tab-btn" onclick="renderMenu('italian')">Italian</button>
-            <button class="tab-btn" onclick="renderMenu('dessert')">Desserts</button>
+            <button class="tab-btn active" onclick="renderMenu('all', event)">All</button>
+            <button class="tab-btn" onclick="renderMenu('brews', event)">Brews & Lassi</button>
+            <button class="tab-btn" onclick="renderMenu('snacks', event)">Burgers & Wraps</button>
+            <button class="tab-btn" onclick="renderMenu('south', event)">South Indian</button>
+            <button class="tab-btn" onclick="renderMenu('chaat', event)">Street Food</button>
+            <button class="tab-btn" onclick="renderMenu('chinese', event)">Chinese</button>
+            <button class="tab-btn" onclick="renderMenu('italian', event)">Italian</button>
+            <button class="tab-btn" onclick="renderMenu('dessert', event)">Desserts</button>
         </div>
 
         <div class="kitchen-layout">
@@ -747,7 +790,7 @@
  { id: 3, name: "Hazelnut Frappe", price: 340, cat: "brews", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80", desc: "Creamy blended cold coffee with hazelnut." },
  { id: 4, name: "Classic Cappuccino", price: 210, cat: "brews", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80", desc: "Perfect foam art with rich espresso." },
 { id: 5, name: "Kulhad Masala Chai", price: 90, cat: "brews", img: "images/Kulhad Masala Chai.png", desc: "Traditional spiced tea served in clay pot." },
-{ id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "images/Mango Lassi.png", desc: "Thick yogurt shake with fresh alphonso mango." },           
+{ id: 6, name: "Mango Lassi", price: 140, cat: "brews", img: "images/Mango Lassi.png", desc: "Thick yogurt shake with fresh alphonso mango." },            
 { id: 7, name: "Sweet Lassi", price: 120, cat: "brews", img: "images/Sweet Lassi.png", desc: "Creamy yogurt drink topped with malai." },
  { id: 8, name: "Virgin Mojito", price: 160, cat: "brews", img: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80", desc: "Refreshing lime and mint cooler." },
 { id: 9, name: "Cold Coffee w/ Ice Cream", price: 220, cat: "brews", img: "images/Cold Coffee w Ice Cream.png", desc: "Blended coffee topped with vanilla scoop." },
@@ -806,32 +849,76 @@
 { id: 75, name: "Gulab Jamun (2pcs)", price: 100, cat: "dessert", img: "images/gulabjamun.png", desc: "Hot dumplings in rose syrup." },{ id: 76, name: "Rasmalai", price: 150, cat: "dessert", img: "images/rasmalai.png", desc: "Soft cheese patties in sweet saffron milk." },        ];
 
         const menuContainer = document.getElementById('menuContainer');
-        const animations = ['slide-left', 'slide-right', 'slide-up', 'zoom-in'];
+        
+        // Define Categories explicitly for grouping
+        const categories = [
+            { id: 'brews', name: 'Brews & Lassi' },
+            { id: 'snacks', name: 'Burgers & Wraps' },
+            { id: 'south', name: 'South Indian' },
+            { id: 'chaat', name: 'Street Food' },
+            { id: 'chinese', name: 'Chinese' },
+            { id: 'italian', name: 'Italian' },
+            { id: 'dessert', name: 'Desserts' }
+        ];
 
-        function renderMenu(filter) {
-            menuContainer.innerHTML = ''; 
-            menuItems.forEach((item) => {
-                if (filter === 'all' || item.cat === filter) {
-                    const animClass = animations[Math.floor(Math.random() * animations.length)];
-                    const card = `
-                        <div class="menu-card animate-card ${animClass}">
-                            <img src="${item.img}" class="card-img" alt="${item.name}">
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <h3>${item.name}</h3>
-                                    <span class="price">₹${item.price}</span>
+        function renderMenu(filter, event) {
+            menuContainer.innerHTML = ''; // Clear existing
+            
+            // Determine which categories to loop through
+            const catsToRender = (filter === 'all') 
+                ? categories 
+                : categories.filter(c => c.id === filter);
+
+            catsToRender.forEach(cat => {
+                // Filter items for this specific category
+                const catItems = menuItems.filter(i => i.cat === cat.id);
+                
+                if (catItems.length > 0) {
+                    // Create Category Section Wrapper
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'category-block';
+                    
+                    // Add Header
+                    const headerHtml = `<div class="category-header">${cat.name}</div>`;
+                    
+                    // Start Items Grid/Flex container
+                    let itemsHtml = `<div class="category-items">`;
+                    
+                    catItems.forEach(item => {
+                        const card = `
+                            <div class="menu-card animate-card">
+                                <img src="${item.img}" class="card-img" alt="${item.name}">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <h3>${item.name}</h3>
+                                        <span class="price">₹${item.price}</span>
+                                    </div>
+                                    <p class="desc">${item.desc}</p>
+                                    <button class="add-btn" onclick="addToCart(${item.id})">Add to Cart +</button>
                                 </div>
-                                <p class="desc">${item.desc}</p>
-                                <button class="add-btn" onclick="addToCart(${item.id})">Add to Cart +</button>
                             </div>
-                        </div>
-                    `;
-                    menuContainer.innerHTML += card;
+                        `;
+                        itemsHtml += card;
+                    });
+                    
+                    itemsHtml += `</div>`; // Close category-items
+                    
+                    sectionDiv.innerHTML = headerHtml + itemsHtml;
+                    menuContainer.appendChild(sectionDiv);
                 }
             });
-            document.querySelectorAll('.animate-card').forEach(el => observer.observe(el));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if(event) event.target.classList.add('active');
+
+            // Re-trigger animations
+            const cards = document.querySelectorAll('.animate-card');
+            cards.forEach((el, index) => {
+                 setTimeout(() => el.classList.add('active'), index * 50); 
+            });
+
+            // Update Tab Active State
+            if (event) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
         }
 
         /* --- JS BASED INFINITE SCROLL WITH MANUAL CONTROL --- */
@@ -1046,17 +1133,8 @@
         setInterval(updateCafeStatus, 60000);
         updateCafeStatus();
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                } else {
-                    entry.target.classList.remove('active');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        renderMenu('all');
+        // Initial render
+        renderMenu('all', null);
     </script>
 </body>
 </html>
