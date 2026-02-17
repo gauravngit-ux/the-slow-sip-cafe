@@ -264,7 +264,7 @@
             .kitchen-layout { 
                 flex-direction: column; 
                 width: 100%;
-                overflow: hidden; /* Stop horizontal breakout */
+                max-width: 100vw;
             }
             .menu-section {
                 padding-left: 0;
@@ -272,6 +272,14 @@
             }
             .section-header, .menu-tabs {
                 padding: 0 20px;
+            }
+            
+            /* Ensures Grid wrapper cannot exceed screen width */
+            .menu-grid {
+                width: 100%;
+                max-width: 100vw;
+                padding: 0; 
+                overflow: hidden; /* Contains all category rows securely */
             }
 
             /* --- MOBILE SPECIFIC MENU CHANGES --- */
@@ -284,12 +292,12 @@
             }
             .category-items {
                 display: flex;
-                overflow-x: auto;
+                flex-wrap: nowrap; /* Forces items into a single horizontal row */
+                overflow-x: auto; /* Triggers internal scrollbar */
                 gap: 20px;
-                padding: 10px 20px 30px 20px; /* Padding creates space for shadow/scroll */
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-                width: 100%;
+                padding: 10px 20px 30px 20px; 
+                -webkit-overflow-scrolling: touch; 
+                width: 100%; /* Ensures this row doesn't exceed screen width */
             }
             /* Hide scrollbar for cleaner look but keep functionality */
             .category-items::-webkit-scrollbar {
@@ -298,7 +306,6 @@
             .menu-card {
                 min-width: 260px; /* Fixed width for horizontal scrolling */
                 flex: 0 0 auto;
-                scroll-snap-align: start;
             }
         }
     </style>
